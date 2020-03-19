@@ -33,7 +33,11 @@ def parse_and_store_xml():
 @csrf_exempt
 @api_view(['GET'])
 def postList(request):
-    posts = Post.objects.all().order_by('creation_date')
+    sort_by = request.query_params.get('sort_by','creation_date')
+    if sort_by not in ['score', 'comment_count']:
+        sort_by = 'creation_date'
+        
+    posts = Post.objects.all().order_by('-'+str(sort_by))
     payload = {}   
     payload["posts"] = []
     for post in posts:
