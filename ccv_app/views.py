@@ -4,6 +4,10 @@ import xml.etree.ElementTree as ET
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.views.decorators.csrf import csrf_exempt
+from rest_framework import filters
+from rest_framework import serializers
+from rest_framework import generics
+from .serializers import PostSerializer
 
 # Create your views here.
 def parse_and_store_xml():
@@ -29,14 +33,13 @@ def parse_and_store_xml():
             comment_count=comment_count)
         post.save()
 
-
 @csrf_exempt
 @api_view(['GET'])
 def postList(request):
     sort_by = request.query_params.get('sort_by','creation_date')
     if sort_by not in ['score', 'comment_count']:
         sort_by = 'creation_date'
-        
+
     posts = Post.objects.all().order_by('-'+str(sort_by))
     payload = {}   
     payload["posts"] = []
@@ -56,3 +59,9 @@ def postList(request):
         payload["posts"].append(post_dict)
     response = Response(payload, status=200)
     return response
+
+class UserListView(generics.ListAPIView):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['body']
